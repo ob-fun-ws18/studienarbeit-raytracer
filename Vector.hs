@@ -1,4 +1,15 @@
-data V3 = V3 Float Float Float deriving (Show)  
+module Vector
+(
+    V3(..),
+    vadd,
+    vmult,
+    vdiv,
+    dot,
+    vlength,
+    normalize
+) where
+
+data V3 = V3 { x :: Float, y :: Float, z :: Float } deriving (Show)  
   
 vadd :: V3 -> V3 -> V3
 (V3 x y z) `vadd` (V3 x2 y2 z2) = V3 (x+x2) (y+y2) (z+z2)
