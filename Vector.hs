@@ -6,7 +6,8 @@ module Vector
     vdiv,
     dot,
     vlength,
-    normalize
+    normalize,
+    cross
 ) where
 
 data V3 = V3 { x :: Float, y :: Float, z :: Float } deriving (Show)  
@@ -28,4 +29,7 @@ vlength (V3 x y z) = (sqrt (dot (V3 x y z) (V3 x y z)))
 
 normalize :: V3 -> V3
 normalize (V3 x y z) = (V3 x y z) `vdiv` vlength (V3 x y z)
+
+cross :: V3 -> V3 -> V3
+(V3 x y z) `cross` (V3 x2 y2 z2) =  V3 (y*z2 - z*y2) (z*x2 - x*z2) (x*y2 - y*x2)
 
