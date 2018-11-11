@@ -2,6 +2,7 @@ module Vector
 (
     V3(..),
     vadd,
+    vsub,
     vmult,
     vdiv,
     dot,
@@ -14,6 +15,9 @@ data V3 = V3 { x :: Float, y :: Float, z :: Float } deriving (Show)
   
 vadd :: V3 -> V3 -> V3
 (V3 x y z) `vadd` (V3 x2 y2 z2) = V3 (x+x2) (y+y2) (z+z2)
+
+vsub :: V3 -> V3 -> V3
+(V3 x y z) `vsub` (V3 x2 y2 z2) = V3 (x-x2) (y-y2) (z-z2)
 
 vmult :: Float -> V3 -> V3
 (s) `vmult` (V3 x y z) = V3 (s*x) (s*y) (s*z)
