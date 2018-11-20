@@ -25,15 +25,12 @@ viewSide = viewDir `cross` viewUp -- this is left atm... shouldnt this be right?
 -- viewport setup
 viewportWidth = 2.0
 viewportHeight = 2.0
-resX = 9.0
-resY = 9.0
+resX = 10.0
+resY = 10.0
 pixelWidth = viewportWidth / resX
 pixelHeight = viewportHeight / resY
 stepX = pixelWidth / 2.0
 stepY = pixelHeight / 2.0
-
-rows = [row | row <- [0..resX]]
-cols = [col | col <- [0..resY]]
 
 -- compute viewport coordinates for given row, col in grid
 cmpVPpxl :: Float -> Float -> V3
@@ -52,8 +49,13 @@ cmpRay vpX vpY =
        originToCenter = cameraPos `vadd` viewDir
        centerToPixel = originToCenter `vadd` (vpX `vmult` viewSide) `vadd` ((-vpY) `vmult` viewUp)
         
-trace :: Float -> Float -> [Float]
-trace gridX gridY = [color | color <- [(hitSphere cameraPos rayDir (V3 0 0 0) 1)]]
+-- returns distance from camera to hit or -1, if no hit
+trace :: Float -> Float -> Float
+trace gridX gridY =
+    hitSphere cameraPos rayDir (V3 0 0 0) 4
     where
         rayDir = cmpRay (x(cmpVPpxl gridX gridY)) (y(cmpVPpxl gridX gridY))
+       
+       
+distanceList = [trace x y | x <- [1..resX], y <- [1..resY]]
 
