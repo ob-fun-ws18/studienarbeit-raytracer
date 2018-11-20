@@ -15,7 +15,7 @@ hitSphere rayOrigin rayDir sphere radius =
           root1 = (-b-droot) / 2.0    
 
 -- camera setup
-cameraPos = (V3 0 0 (-10))
+cameraPos = (V3 0 0 (-5))
 up = (V3 0 1 0)
 lookAt = (V3 0 0 0)
 viewDir = normalize $ lookAt `vsub` cameraPos
@@ -25,12 +25,15 @@ viewSide = viewDir `cross` viewUp -- this is left atm... shouldnt this be right?
 -- viewport setup
 viewportWidth = 2.0
 viewportHeight = 2.0
-resX = 10.0
-resY = 10.0
+resX = 9.0
+resY = 9.0
 pixelWidth = viewportWidth / resX
 pixelHeight = viewportHeight / resY
 stepX = pixelWidth / 2.0
 stepY = pixelHeight / 2.0
+
+rows = [row | row <- [0..resX]]
+cols = [col | col <- [0..resY]]
 
 -- compute viewport coordinates for given row, col in grid
 cmpVPpxl :: Float -> Float -> V3
@@ -40,7 +43,17 @@ cmpVPpxl row col =
         x = (pixelWidth * col) -1.0 + stepX
         y = (pixelHeight * row) -1.0 + stepY
         z = 0.0 -- don't really need this component
-    
+
+-- compute ray from camera to given viewport coordinate vpX, vpY
+cmpRay :: Float -> Float -> V3
+cmpRay vpX vpY = 
+   normalize $ centerToPixel `vsub` cameraPos
+   where
+       originToCenter = cameraPos `vadd` viewDir
+       centerToPixel = originToCenter `vadd` (vpX `vmult` viewSide) `vadd` ((-vpY) `vmult` viewUp)
+        
 trace :: Float -> Float -> [Float]
-trace resX resY = [color | color <- [(hitSphere cameraPos (V3 0 0 1) (V3 0 0 0) 1)]]
+trace gridX gridY = [color | color <- [(hitSphere cameraPos rayDir (V3 0 0 0) 1)]]
+    where
+        rayDir = cmpRay (x(cmpVPpxl gridX gridY)) (y(cmpVPpxl gridX gridY))
 
