@@ -61,4 +61,7 @@ trace gridX gridY =
        
 distanceList = [trace x y | x <- [0..(resX-1)], y <- [0..(resY-1)]]
 
+-- maps distances to RGB white tuple or RGB black tuples according to distance
+toRGB888 = map (\value -> if (value > -1.0) then (255, 255, 255) else (0, 0, 0)) distanceList
+
 -- printDistanceList = [show $ distanceList !! index | index <- [0..99]]
