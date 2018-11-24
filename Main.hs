@@ -27,8 +27,8 @@ viewSide = viewDir `cross` viewUp -- this is left atm... shouldnt this be right?
 -- viewport setup
 viewportWidth = 2.0
 viewportHeight = 2.0
-resX = 11.0
-resY = 11.0
+resX = 5.0
+resY = 5.0
 pixelWidth = viewportWidth / resX
 pixelHeight = viewportHeight / resY
 stepX = pixelWidth / 2.0
@@ -54,7 +54,7 @@ cmpRay vpX vpY =
 -- returns distance from camera to hit or -1, if no hit
 trace :: Float -> Float -> Float
 trace gridX gridY =
-    hitSphere cameraPos rayDir (V3 0 0 0) 1
+    hitSphere cameraPos rayDir (V3 0 0 0) 2
     where
         rayDir = cmpRay (x(cmpVPpxl gridX gridY)) (y(cmpVPpxl gridX gridY))
        
@@ -62,6 +62,7 @@ trace gridX gridY =
 distanceList = [trace x y | x <- [0..(resX-1)], y <- [0..(resY-1)]]
 
 -- maps distances to RGB white tuple or RGB black tuples according to distance
-toRGB888 = map (\value -> if (value > -1.0) then (255, 255, 255) else (0, 0, 0)) distanceList
+toRGB888 = map (\value -> if (value > -1.0) then (255, 255, 255) else (111, 111, 111)) distanceList
 
 -- printDistanceList = [show $ distanceList !! index | index <- [0..99]]
+-- https://stackoverflow.com/questions/18691321/printing-a-2d-array-in-haskell might be helpful
