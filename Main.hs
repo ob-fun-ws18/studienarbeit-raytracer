@@ -1,3 +1,5 @@
+import System.IO
+import Control.Monad
 import Vector
 
 hitSphere :: V3 -> V3 -> V3 -> Float -> Float
@@ -25,8 +27,8 @@ viewSide = viewDir `cross` viewUp -- this is left atm... shouldnt this be right?
 -- viewport setup
 viewportWidth = 2.0
 viewportHeight = 2.0
-resX = 10.0
-resY = 10.0
+resX = 11.0
+resY = 11.0
 pixelWidth = viewportWidth / resX
 pixelHeight = viewportHeight / resY
 stepX = pixelWidth / 2.0
@@ -52,10 +54,11 @@ cmpRay vpX vpY =
 -- returns distance from camera to hit or -1, if no hit
 trace :: Float -> Float -> Float
 trace gridX gridY =
-    hitSphere cameraPos rayDir (V3 0 0 0) 4
+    hitSphere cameraPos rayDir (V3 0 0 0) 1
     where
         rayDir = cmpRay (x(cmpVPpxl gridX gridY)) (y(cmpVPpxl gridX gridY))
        
        
-distanceList = [trace x y | x <- [1..resX], y <- [1..resY]]
+distanceList = [trace x y | x <- [0..(resX-1)], y <- [0..(resY-1)]]
 
+-- printDistanceList = [show $ distanceList !! index | index <- [0..99]]
