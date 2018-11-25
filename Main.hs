@@ -11,9 +11,9 @@ hitSphere rayOrigin rayDir sphere radius =
     else if root1 > 0.0
         then root1
     else (-b+droot) / 2.0
-    where oc = rayOrigin `vsub` sphere
-          b = 2 * (rayDir `dot` oc)
-          c = (oc `dot ` oc) - (radius * radius)
+    where sphereToOrigin = rayOrigin `vsub` sphere
+          b = 2 * (rayDir `dot` sphereToOrigin)
+          c = (sphereToOrigin `dot ` sphereToOrigin) - (radius * radius)
           discriminant = b*b - 4*c
           droot = sqrt discriminant
           root1 = (-b-droot) / 2.0    
@@ -70,7 +70,5 @@ toChar = map (\value -> if (value > -1.0) then "#" else "_") distanceList
 
 -- yeah...
 printGrid arr = mapM_ (putStrLn . unwords) $ map (map show) $ chunksOf 21 arr
--- printDistanceList = [show $ distanceList !! index | index <- [0..99]]
--- https://stackoverflow.com/questions/18691321/printing-a-2d-array-in-haskell might be helpful
 
 main = printGrid toChar
