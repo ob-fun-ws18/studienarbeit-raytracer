@@ -1,5 +1,7 @@
 import System.IO
 import Control.Monad
+import Data.List.Split
+
 import Vector
 
 hitSphere :: V3 -> V3 -> V3 -> Float -> Float
@@ -17,9 +19,9 @@ hitSphere rayOrigin rayDir sphere radius =
           root1 = (-b-droot) / 2.0    
 
 -- camera setup
-cameraPos = (V3 0 0 (-5))
+cameraPos = (V3 5 0 (-5))
 up = (V3 0 1 0)
-lookAt = (V3 0 0 0)
+lookAt = (V3 5 0 0)
 viewDir = normalize $ lookAt `vsub` cameraPos
 viewUp = normalize $ up `vsub` ((dot up viewDir) `vmult` viewDir )
 viewSide = viewDir `cross` viewUp -- this is left atm... shouldnt this be right?
@@ -27,8 +29,8 @@ viewSide = viewDir `cross` viewUp -- this is left atm... shouldnt this be right?
 -- viewport setup
 viewportWidth = 2.0
 viewportHeight = 2.0
-resX = 5.0
-resY = 5.0
+resX = 21
+resY = 21
 pixelWidth = viewportWidth / resX
 pixelHeight = viewportHeight / resY
 stepX = pixelWidth / 2.0
@@ -62,7 +64,13 @@ trace gridX gridY =
 distanceList = [trace x y | x <- [0..(resX-1)], y <- [0..(resY-1)]]
 
 -- maps distances to RGB white tuple or RGB black tuples according to distance
-toRGB888 = map (\value -> if (value > -1.0) then (255, 255, 255) else (111, 111, 111)) distanceList
+toRGB888 = map (\value -> if (value > -1.0) then (255, 255, 255) else (0, 0, 0)) distanceList
 
+toChar = map (\value -> if (value > -1.0) then "#" else "_") distanceList
+
+-- yeah...
+printGrid arr = mapM_ (putStrLn . unwords) $ map (map show) $ chunksOf 21 arr
 -- printDistanceList = [show $ distanceList !! index | index <- [0..99]]
 -- https://stackoverflow.com/questions/18691321/printing-a-2d-array-in-haskell might be helpful
+
+main = printGrid toChar
