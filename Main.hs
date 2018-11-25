@@ -19,12 +19,12 @@ hitSphere rayOrigin rayDir sphere radius =
           root1 = (-b-droot) / 2.0    
 
 -- camera setup
-cameraPos = (V3 5 0 (-5))
+cameraPos = (V3 0 0 5)
 up = (V3 0 1 0)
-lookAt = (V3 5 0 0)
+lookAt = (V3 0 0 0)
 viewDir = normalize $ lookAt `vsub` cameraPos
 viewUp = normalize $ up `vsub` ((dot up viewDir) `vmult` viewDir )
-viewSide = viewDir `cross` viewUp -- this is left atm... shouldnt this be right?
+viewRight = viewDir `cross` viewUp
 
 -- viewport setup
 viewportWidth = 2.0
@@ -51,7 +51,7 @@ cmpRay vpX vpY =
    normalize $ centerToPixel `vsub` cameraPos
    where
        originToCenter = cameraPos `vadd` viewDir
-       centerToPixel = originToCenter `vadd` (vpX `vmult` viewSide) `vadd` ((-vpY) `vmult` viewUp)
+       centerToPixel = originToCenter `vadd` (vpX `vmult` viewRight) `vadd` ((-vpY) `vmult` viewUp)
         
 -- returns distance from camera to hit or -1, if no hit
 trace :: Float -> Float -> Float
