@@ -19,9 +19,9 @@ hitSphere rayOrigin rayDir sphere radius =
           root1 = (-b-droot) / 2.0    
 
 -- camera setup
-cameraPos = (V3 0 0 5)
+cameraPos = (V3 5 0 5)
 up = (V3 0 1 0)
-lookAt = (V3 0 0 0)
+lookAt = (V3 5 0 0)
 viewDir = normalize $ lookAt `vsub` cameraPos
 viewUp = normalize $ up `vsub` ((dot up viewDir) `vmult` viewDir )
 viewRight = viewDir `cross` viewUp
