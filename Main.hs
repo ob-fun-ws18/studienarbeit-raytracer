@@ -4,14 +4,18 @@ import Data.List.Split
 
 import Vector
 
-hitSphere :: V3 -> V3 -> V3 -> Float -> Float
-hitSphere rayOrigin rayDir sphere radius =
+-- Sphere : x,y,z pos & radius
+-- type Sphere = (V3, Float)
+data Sphere = Sphere V3 Float
+
+hitSphere :: V3 -> V3 -> Sphere -> Float
+hitSphere rayOrigin rayDir (Sphere pos radius) =
     if (discriminant < 0)
         then -1.0
     else if root1 > 0.0
         then root1
     else (-b+droot) / 2.0
-    where sphereToOrigin = rayOrigin `vsub` sphere
+    where sphereToOrigin = rayOrigin `vsub` pos
           b = 2 * (rayDir `dot` sphereToOrigin)
           c = (sphereToOrigin `dot ` sphereToOrigin) - (radius * radius)
           discriminant = b*b - 4*c
@@ -52,19 +56,16 @@ cmpRay vpX vpY =
    where
        originToCenter = cameraPos `vadd` viewDir
        centerToPixel = originToCenter `vadd` (vpX `vmult` viewRight) `vadd` ((-vpY) `vmult` viewUp)
-
--- Sphere : x,y,z pos & radius
-type Sphere = (V3, Float)
         
 -- returns distance from camera to hit or -1, if no hit
-trace :: Float -> Float -> V3 -> Float -> Float
-trace gridX gridY sphere radius =
-    hitSphere cameraPos rayDir sphere radius
+trace :: Float -> Float -> Sphere -> Float
+trace gridX gridY sphere =
+    hitSphere cameraPos rayDir sphere
     where
         rayDir = cmpRay (x(cmpVPpxl gridX gridY)) (y(cmpVPpxl gridX gridY))
        
        
-distanceList = [trace x y (V3 0 0 0) 2 | x <- [0..(resX-1)], y <- [0..(resY-1)]]
+distanceList = [trace x y (Sphere (V3 0 0 0) 2) | x <- [0..(resX-1)], y <- [0..(resY-1)]]
 
 -- maps distances to RGB white tuple or RGB black tuples according to distance
 toRGBTupleList :: [(Float, Float, Float)]
