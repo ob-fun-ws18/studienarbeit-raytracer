@@ -7,28 +7,36 @@ import Vector
 -- Sphere : x,y,z pos & radius
 -- type Sphere = (V3, Float)
 data Sphere = Sphere V3 Float
+data HitRecord = HitRecord Float V3 V3 -- Distance, Hitpoint, Normal
+minimumHitRecord :: HitRecord -> HitRecord -> HitRecord
+minimumHitRecord (HitRecord distance1 _ _) (HitRecord distance2 _ _) -- FUCK!
 
-hitSphere :: V3 -> V3 -> Sphere -> Float
+hitSphere :: V3 -> V3 -> Sphere -> HitRecord
 hitSphere rayOrigin rayDir (Sphere pos radius) =
     if (discriminant < 0)
-        then 0.0
-    else if root1 > 0.0
-        then root1
-    else (-b+droot) / 2.0
+        then (HitRecord 0.0 (V3 0 0 0) (V3 0 0 0)) -- no hit
+    else
+        if root1 > 0.0
+            then (HitRecord root1 hitPoint1 normal1)
+        else (HitRecord ((-b+droot) / 2.0) hitPoint2 normal1)
     where sphereToOrigin = rayOrigin `vsub` pos
           b = 2 * (rayDir `dot` sphereToOrigin)
           c = (sphereToOrigin `dot ` sphereToOrigin) - (radius * radius)
           discriminant = b*b - 4*c
           droot = sqrt discriminant
-          root1 = (-b-droot) / 2.0    
+          root1 = (-b-droot) / 2.0
+          hitPoint1 = rayOrigin `vadd` (root1 `vmult` rayDir)
+          hitPoint2 = rayOrigin `vadd` (droot `vmult` rayDir)
+          normal1 = hitPoint1 `vsub` pos
+          normal2 = hitPoint2 `vsub` pos
 
 -- Generic hit function working on a list of hitable items (for now only Spheres)        
-hit :: V3 -> V3 -> [Sphere] -> Float
+hit :: V3 -> V3 -> [Sphere] -> HitRecord
 hit rayOrigin rayDir spheres =
-    if (null hitDistances)
+    if (null hitRecords) -- no hit at all
         then -1.0
-    else minimum hitDistances
-    where hitDistances = [distance | distance <- [hitSphere rayOrigin rayDir sphere | sphere <- spheres], distance > 0.0]
+    else minimum hitRecords
+    where hitRecords = [ hitRecord | hitRecord <- [hitSphere rayOrigin rayDir sphere | sphere <- spheres], distance > 0.0]
 
 -- camera setup
 cameraPos = (V3 0 0 5)
@@ -73,11 +81,11 @@ trace gridX gridY sphereList =
         rayDir = cmpRay (x(cmpVPpxl gridX gridY)) (y(cmpVPpxl gridX gridY))
        
        
-distanceList = [trace x y [(Sphere (V3 (-1) 0 0) 1), (Sphere (V3 0 0 0) 1)] | x <- [0..(resX-1)], y <- [0..(resY-1)] ]
+distanceList = [trace x y [(Sphere (V3 (-1) 0 0) 1), (Sphere (V3 2 0 0) 2)] | x <- [0..(resX-1)], y <- [0..(resY-1)] ]
 
 -- maps distances to RGB white tuple or RGB black tuples according to distance
 toRGBTupleList :: [(Float, Float, Float)]
-toRGBTupleList = map (\value -> if (value > 0.0) then (1.0, 1.0, 1.0) else (0.0, 0.0, 0.0)) distanceList
+toRGBTupleList = map (\value -> if (value > 0.0) then (0.0, 0.4, 1.0) else (0.0, 0.0, 0.0)) distanceList
 
 -- maps distances to Characters, '#' if hit, '_' otherwise
 toStringList :: [String]
