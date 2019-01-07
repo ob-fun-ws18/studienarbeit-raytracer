@@ -5,8 +5,8 @@ import Data.Maybe
 
 import Vector
 
-data Sphere = Sphere V3 Float
-data HitRecord = HitRecord Float V3 V3 -- Distance, Hitpoint, Normal
+data Sphere = Sphere V3 Float V3 -- Position, Radius, Color
+data HitRecord = HitRecord Float V3 V3 V3 -- Distance, Hitpoint, Normal, Color
 minimumHitRecord :: [HitRecord] -> Maybe HitRecord
 minimumHitRecord [] = Nothing
 minimumHitRecord [hitrec] = Just hitrec
@@ -15,23 +15,27 @@ minimumHitRecord (x:xs) = if x `smallerThan` (minimumHitRecord xs) then Just x
 
 smallerThan :: HitRecord -> Maybe HitRecord -> Bool
 smallerThan _ Nothing = True
-smallerThan (HitRecord distance _ _) (Just (HitRecord distance2 _ _)) = distance < distance2
+smallerThan (HitRecord distance _ _ _) (Just (HitRecord distance2 _ _ _)) = distance < distance2
 
 distanceGreaterZero :: HitRecord -> Bool
-distanceGreaterZero (HitRecord distance _ _) = distance > 0.0
+distanceGreaterZero (HitRecord distance _ _ _) = distance > 0.0
 
 distanceOfHitrecord :: Maybe HitRecord -> Maybe Float
 distanceOfHitrecord Nothing = Nothing
-distanceOfHitrecord (Just (HitRecord distance _ _)) = Just distance
+distanceOfHitrecord (Just (HitRecord distance _ _ _)) = Just distance
                
+colorOf :: Maybe HitRecord -> Maybe (Float, Float, Float)
+colorOf Nothing = Nothing
+colorOf (Just (HitRecord _ _ _ color)) = (Just (x(color), y(color), z(color)))
+
 hitSphere :: V3 -> V3 -> Sphere -> HitRecord
-hitSphere rayOrigin rayDir (Sphere pos radius) =
+hitSphere rayOrigin rayDir (Sphere pos radius color) =
     if (discriminant < 0)
-        then (HitRecord 0.0 (V3 0 0 0) (V3 0 0 0)) -- no hit
+        then (HitRecord 0.0 (V3 0 0 0) (V3 0 0 0) color) -- no hit
     else
         if root1 > 0.0
-            then (HitRecord root1 hitPoint1 normal1)
-        else (HitRecord ((-b+droot) / 2.0) hitPoint2 normal1)
+            then (HitRecord root1 hitPoint1 normal1 color)
+        else (HitRecord ((-b+droot) / 2.0) hitPoint2 normal1 color)
     where sphereToOrigin = rayOrigin `vsub` pos
           b = 2 * (rayDir `dot` sphereToOrigin)
           c = (sphereToOrigin `dot ` sphereToOrigin) - (radius * radius)
@@ -85,23 +89,24 @@ cmpRay vpX vpY =
        centerToPixel = originToCenter `vadd` (vpX `vmult` viewRight) `vadd` ((-vpY) `vmult` viewUp)
         
 -- returns distance from camera to hit or -1, if no hit
-trace :: Float -> Float -> [Sphere] -> Maybe Float
+trace :: Float -> Float -> [Sphere] -> Maybe HitRecord
 trace gridX gridY sphereList =
-    distanceOfHitrecord hitrecord
+    hitrecord
     where
         rayDir = cmpRay (x(cmpVPpxl gridX gridY)) (y(cmpVPpxl gridX gridY))
         hitrecord = hit cameraPos rayDir sphereList
        
        
-distanceList = [trace x y [(Sphere (V3 (-1) 0 0) 1), (Sphere (V3 2 0 0) 2)] | x <- [0..(resX-1)], y <- [0..(resY-1)]]
+hitRecordList = [trace x y [(Sphere (V3 (-1) 0 0) 1 (V3 1 0 0)), (Sphere (V3 0.5 0 0) 1 (V3 0 1 0))] | x <- [0..(resX-1)], y <- [0..(resY-1)]]
 
 -- maps distances to RGB white tuple or RGB black tuples according to distance
-toRGBTupleList :: [(Float, Float, Float)]
-toRGBTupleList = map (\value -> if isJust value then (0.0, 0.4, 1.0) else (0.0, 0.0, 0.0)) distanceList
+toRGBTupleList :: [Maybe HitRecord] -> [(Float, Float, Float)]
+-- toRGBTupleList hitrecordList = [color | color <- [hitrec | hitrec <- colorOf hitrecordList, if isJust hitrec then (colorOf hitrec) else (0,0,0)]]
+toRGBTupleList hitrecordList = map (\value -> if isJust value then (if isJust (colorOf value) then (x(colorOf value), y(colorOf value), z(colorOf value)) else (0,0,0)) else (0,0,0)) hitrecordList
 
 -- maps distances to Characters, '#' if hit, '_' otherwise
-toStringList :: [String]
-toStringList = map (\value -> if isJust value then "#" else "_") distanceList
+-- toStringList :: [String]
+-- toStringList = map (\value -> if isJust value then "#" else "_") hitRecordList
 
 -- yeah... does stuff I cannot read anymore and I forgot how it works
 printGrid arr = mapM_ (putStrLn . unwords) $ map (map show) $ chunksOf 21 arr
@@ -117,4 +122,4 @@ makePPM width height xs = "P3\n" ++ show width ++ " " ++ show height ++ "\n255\n
          
 
 -- main = make_pgm resX resY toRGBTupleList
-main = do writeFile "test.ppm" (makePPM (round resX) (round resY) toRGBTupleList)
+main = do writeFile "test.ppm" (makePPM (round resX) (round resY) toRGBTupleList hitRecordList)
