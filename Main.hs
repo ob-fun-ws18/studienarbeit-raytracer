@@ -102,7 +102,11 @@ hitRecordList = [trace x y [(Sphere (V3 (-1) 0 0) 1 (V3 1 0 0)), (Sphere (V3 0.5
 -- maps distances to RGB white tuple or RGB black tuples according to distance
 toRGBTupleList :: [Maybe HitRecord] -> [(Float, Float, Float)]
 -- toRGBTupleList hitrecordList = [color | color <- [hitrec | hitrec <- colorOf hitrecordList, if isJust hitrec then (colorOf hitrec) else (0,0,0)]]
-toRGBTupleList hitrecordList = map (\value -> if isJust value then (if isJust (colorOf value) then (x(colorOf value), y(colorOf value), z(colorOf value)) else (0,0,0)) else (0,0,0)) hitrecordList
+toRGBTupleList hitrecordList = map hitrecordToColor hitrecordList
+
+hitrecordToColor Nothing = (0,0,0)
+hitrecordToColor (Just (HitRecord _ _ _ (V3 x y z))) = (x, y, z)
+
 
 -- maps distances to Characters, '#' if hit, '_' otherwise
 -- toStringList :: [String]
@@ -122,4 +126,4 @@ makePPM width height xs = "P3\n" ++ show width ++ " " ++ show height ++ "\n255\n
          
 
 -- main = make_pgm resX resY toRGBTupleList
-main = do writeFile "test.ppm" (makePPM (round resX) (round resY) toRGBTupleList hitRecordList)
+main = do writeFile "test.ppm" (makePPM (round resX) (round resY) (toRGBTupleList hitRecordList))
