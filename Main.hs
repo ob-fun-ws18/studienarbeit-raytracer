@@ -1,16 +1,29 @@
 import System.IO
 import Control.Monad
 import Data.List.Split
+import Data.Maybe
 
 import Vector
 
--- Sphere : x,y,z pos & radius
--- type Sphere = (V3, Float)
 data Sphere = Sphere V3 Float
 data HitRecord = HitRecord Float V3 V3 -- Distance, Hitpoint, Normal
-minimumHitRecord :: HitRecord -> HitRecord -> HitRecord
-minimumHitRecord (HitRecord distance1 _ _) (HitRecord distance2 _ _) -- FUCK!
+minimumHitRecord :: [HitRecord] -> Maybe HitRecord
+minimumHitRecord [] = Nothing
+minimumHitRecord [hitrec] = Just hitrec
+minimumHitRecord (x:xs) = if x `smallerThan` (minimumHitRecord xs) then Just x
+                          else minimumHitRecord xs
 
+smallerThan :: HitRecord -> Maybe HitRecord -> Bool
+smallerThan _ Nothing = True
+smallerThan (HitRecord distance _ _) (Just (HitRecord distance2 _ _)) = distance < distance2
+
+distanceGreaterZero :: HitRecord -> Bool
+distanceGreaterZero (HitRecord distance _ _) = distance > 0.0
+
+distanceOfHitrecord :: Maybe HitRecord -> Maybe Float
+distanceOfHitrecord Nothing = Nothing
+distanceOfHitrecord (Just (HitRecord distance _ _)) = Just distance
+               
 hitSphere :: V3 -> V3 -> Sphere -> HitRecord
 hitSphere rayOrigin rayDir (Sphere pos radius) =
     if (discriminant < 0)
@@ -31,12 +44,10 @@ hitSphere rayOrigin rayDir (Sphere pos radius) =
           normal2 = hitPoint2 `vsub` pos
 
 -- Generic hit function working on a list of hitable items (for now only Spheres)        
-hit :: V3 -> V3 -> [Sphere] -> HitRecord
+hit :: V3 -> V3 -> [Sphere] -> Maybe HitRecord
 hit rayOrigin rayDir spheres =
-    if (null hitRecords) -- no hit at all
-        then -1.0
-    else minimum hitRecords
-    where hitRecords = [ hitRecord | hitRecord <- [hitSphere rayOrigin rayDir sphere | sphere <- spheres], distance > 0.0]
+    minimumHitRecord hitRecords
+    where hitRecords = [ hitRecord | hitRecord <- [hitSphere rayOrigin rayDir sphere | sphere <- spheres], distanceGreaterZero hitRecord]
 
 -- camera setup
 cameraPos = (V3 0 0 5)
@@ -74,22 +85,23 @@ cmpRay vpX vpY =
        centerToPixel = originToCenter `vadd` (vpX `vmult` viewRight) `vadd` ((-vpY) `vmult` viewUp)
         
 -- returns distance from camera to hit or -1, if no hit
-trace :: Float -> Float -> [Sphere] -> Float
+trace :: Float -> Float -> [Sphere] -> Maybe Float
 trace gridX gridY sphereList =
-    hit cameraPos rayDir sphereList
+    distanceOfHitrecord hitrecord
     where
         rayDir = cmpRay (x(cmpVPpxl gridX gridY)) (y(cmpVPpxl gridX gridY))
+        hitrecord = hit cameraPos rayDir sphereList
        
        
-distanceList = [trace x y [(Sphere (V3 (-1) 0 0) 1), (Sphere (V3 2 0 0) 2)] | x <- [0..(resX-1)], y <- [0..(resY-1)] ]
+distanceList = [trace x y [(Sphere (V3 (-1) 0 0) 1), (Sphere (V3 2 0 0) 2)] | x <- [0..(resX-1)], y <- [0..(resY-1)]]
 
 -- maps distances to RGB white tuple or RGB black tuples according to distance
 toRGBTupleList :: [(Float, Float, Float)]
-toRGBTupleList = map (\value -> if (value > 0.0) then (0.0, 0.4, 1.0) else (0.0, 0.0, 0.0)) distanceList
+toRGBTupleList = map (\value -> if isJust value then (0.0, 0.4, 1.0) else (0.0, 0.0, 0.0)) distanceList
 
 -- maps distances to Characters, '#' if hit, '_' otherwise
 toStringList :: [String]
-toStringList = map (\value -> if (value > 0.0) then "#" else "_") distanceList
+toStringList = map (\value -> if isJust value then "#" else "_") distanceList
 
 -- yeah... does stuff I cannot read anymore and I forgot how it works
 printGrid arr = mapM_ (putStrLn . unwords) $ map (map show) $ chunksOf 21 arr
