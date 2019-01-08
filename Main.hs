@@ -142,6 +142,29 @@ defaultSpheres = [(Sphere (V3 (-1) 0 0) 1 (V3 1 1 1)), (Sphere (V3 1 0 0) 1 (V3 
        
 colors spheres = [trace x y spheres | x <- [0..(resX-1)], y <- [0..(resY-1)]]
 
+
+
+colors' spheres = let coordinates = [(x,y) | x <- [0..(resX-1)], y <- [0..(resY-1)]]
+                  in forM coordinates $ \c -> traceSuper c spheres 10
+
+addTuples :: (Float, Float, Float) -> (Float, Float, Float) -> (Float, Float, Float)
+addTuples (a,b,c) (x,y,z) = (a+x, b+y, c+z)
+
+divTupleBy :: Integer -> (Float, Float, Float) -> (Float, Float, Float)
+divTupleBy x (a, b, c) = (a/y, b/y, c/y) where y = fromIntegral x
+
+traceSuper :: (Float, Float) -> [Sphere] -> Integer -> IO (Float, Float, Float)
+traceSuper (x, y) spheres sampleCount = do
+    samples <- forM [1..sampleCount] $ \_ -> traceSuper' x y spheres
+    return . divTupleBy sampleCount $ foldl addTuples (0.0,0.0,0.0) samples
+    
+traceSuper' :: Float -> Float -> [Sphere] -> IO (Float, Float, Float)
+traceSuper' x y spheres = do
+    xBias <- randomRIO (0.0, 1.0)
+    yBias <- randomRIO (0.0, 1.0)
+    return $ trace (x + xBias) (y + yBias) spheres
+    
+
 -- maps distances to Characters, '#' if hit, '_' otherwise
 -- toStringList :: [String]
 -- toStringList = map (\value -> if isJust value then "#" else "_") hitRecordList
@@ -162,4 +185,5 @@ makePPM width height xs = "P3\n" ++ show width ++ " " ++ show height ++ "\n255\n
 -- main = make_pgm resX resY toRGBTupleList
 main = do 
     spheres <- randomSphereList 60
-    writeFile "test.ppm" (makePPM (round resX) (round resY) (colors spheres))
+    colors'' <- colors' spheres
+    writeFile "test2.ppm" (makePPM (round resX) (round resY) colors'')
