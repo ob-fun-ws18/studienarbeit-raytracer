@@ -129,7 +129,7 @@ makeRandomSphere = do
     colorG <- randomRIO (0.1, 1.0)
     colorB <- randomRIO (0.1, 1.0)
     
-    radius <- randomRIO (0.3, 2.0)
+    radius <- randomRIO (0.1, 2.5)
     
     posX <- randomRIO (-10.0, 10.0)
     posY <- randomRIO (-10.0, 10.0)
@@ -145,7 +145,7 @@ colors spheres = [trace x y spheres | x <- [0..(resX-1)], y <- [0..(resY-1)]]
 
 
 colors' spheres = let coordinates = [(x,y) | x <- [0..(resX-1)], y <- [0..(resY-1)]]
-                  in forM coordinates $ \c -> traceSuper c spheres 5
+                  in forM coordinates $ \c -> traceSuper c spheres 10
 
 addTuples :: (Float, Float, Float) -> (Float, Float, Float) -> (Float, Float, Float)
 addTuples (a,b,c) (x,y,z) = (a+x, b+y, c+z)
@@ -175,15 +175,16 @@ printGrid arr = mapM_ (putStrLn . unwords) $ map (map show) $ chunksOf 21 arr
 -- convert color values to PPM format
 makePPM :: Int -> Int-> [ (Float, Float, Float) ] -> String
 makePPM width height xs = "P3\n" ++ show width ++ " " ++ show height ++ "\n255\n" ++ stringify(xs)
-		  where stringify [] = ""
-			stringify ((r,g,b):xs) = show (round (r*255)) ++ " " 
-						 ++ show (round (g*255)) ++ " " 
-						 ++ show (round (b*255)) ++ " "
-						 ++ stringify xs
+    where 
+        stringify [] = ""
+        stringify ((r,g,b):xs) = show (round (r*255)) ++ " " 
+            ++ show (round (g*255)) ++ " " 
+            ++ show (round (b*255)) ++ " "
+            ++ stringify xs
          
 
 -- main = make_pgm resX resY toRGBTupleList
 main = do 
-    spheres <- randomSphereList 10
+    spheres <- randomSphereList 50
     colors'' <- colors' spheres
-    writeFile "test2.ppm" (makePPM (round resX) (round resY) colors'')
+    writeFile "test.ppm" (makePPM (round resX) (round resY) colors'')
