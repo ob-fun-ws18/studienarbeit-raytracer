@@ -114,9 +114,9 @@ cmpRay vpX vpY =
        centerToPixel = originToCenter `vadd` (vpX `smult` viewRight) `vadd` ((-vpY) `smult` viewUp)
         
 -- returns distance from camera to hit or -1, if no hit
-trace :: Float -> Float -> [Sphere] -> (Float, Float, Float)
-trace gridX gridY sphereList =
-    color cameraPos rayDir sphereList 50
+trace :: Float -> Float -> [Sphere] -> Int -> (Float, Float, Float)
+trace gridX gridY sphereList depth =
+    color cameraPos rayDir sphereList depth
     where
         rayDir = cmpRay (x(cmpVPpxl gridX gridY)) (y(cmpVPpxl gridX gridY))
        
@@ -140,29 +140,29 @@ makeRandomSphere = do
 defaultSpheres = [(Sphere (V3 (-1) 0 0) 1 (V3 1 1 1)), (Sphere (V3 1 0 0) 1 (V3 0.2 1 1))]
        
        
-colors spheres = [trace x y spheres | x <- [0..(resX-1)], y <- [0..(resY-1)]]
+colors spheres depth = [trace x y spheres depth | x <- [0..(resX-1)], y <- [0..(resY-1)]]
 
 
-
-colors' spheres = let coordinates = [(x,y) | x <- [0..(resX-1)], y <- [0..(resY-1)]]
-                  in forM coordinates $ \c -> traceSuper c spheres 10
+colors' :: [Sphere] -> Int -> Int -> IO [(Float, Float, Float)]
+colors' spheres sampleCount depth = let coordinates = [(x,y) | x <- [0..(resX-1)], y <- [0..(resY-1)]]
+                  in forM coordinates $ \c -> traceSuper c spheres sampleCount depth
 
 addTuples :: (Float, Float, Float) -> (Float, Float, Float) -> (Float, Float, Float)
 addTuples (a,b,c) (x,y,z) = (a+x, b+y, c+z)
 
-divTupleBy :: Integer -> (Float, Float, Float) -> (Float, Float, Float)
+divTupleBy :: Int -> (Float, Float, Float) -> (Float, Float, Float)
 divTupleBy x (a, b, c) = (a/y, b/y, c/y) where y = fromIntegral x
 
-traceSuper :: (Float, Float) -> [Sphere] -> Integer -> IO (Float, Float, Float)
-traceSuper (x, y) spheres sampleCount = do
-    samples <- forM [1..sampleCount] $ \_ -> traceSuper' x y spheres
+traceSuper :: (Float, Float) -> [Sphere] -> Int -> Int -> IO (Float, Float, Float)
+traceSuper (x, y) spheres sampleCount depth = do
+    samples <- forM [1..sampleCount] $ \_ -> traceSuper' x y spheres depth
     return . divTupleBy sampleCount $ foldl addTuples (0.0,0.0,0.0) samples
     
-traceSuper' :: Float -> Float -> [Sphere] -> IO (Float, Float, Float)
-traceSuper' x y spheres = do
+traceSuper' :: Float -> Float -> [Sphere] -> Int -> IO (Float, Float, Float)
+traceSuper' x y spheres depth = do
     xBias <- randomRIO (0.0, 1.0)
     yBias <- randomRIO (0.0, 1.0)
-    return $ trace (x + xBias) (y + yBias) spheres
+    return $ trace (x + xBias) (y + yBias) spheres depth
     
 
 -- maps distances to Characters, '#' if hit, '_' otherwise
@@ -184,7 +184,7 @@ makePPM width height xs = "P3\n" ++ show width ++ " " ++ show height ++ "\n255\n
          
 
 -- main = make_pgm resX resY toRGBTupleList
-main = do 
+main = do
     spheres <- randomSphereList 50
-    colors'' <- colors' spheres
+    colors'' <- colors' spheres 1 50
     writeFile "test.ppm" (makePPM (round resX) (round resY) colors'')
