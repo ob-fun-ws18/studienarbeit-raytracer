@@ -116,7 +116,7 @@ cmpRay vpX vpY =
 -- returns distance from camera to hit or -1, if no hit
 trace :: Float -> Float -> [Sphere] -> (Float, Float, Float)
 trace gridX gridY sphereList =
-    color cameraPos rayDir sphereList 100
+    color cameraPos rayDir sphereList 50
     where
         rayDir = cmpRay (x(cmpVPpxl gridX gridY)) (y(cmpVPpxl gridX gridY))
        
@@ -145,7 +145,7 @@ colors spheres = [trace x y spheres | x <- [0..(resX-1)], y <- [0..(resY-1)]]
 
 
 colors' spheres = let coordinates = [(x,y) | x <- [0..(resX-1)], y <- [0..(resY-1)]]
-                  in forM coordinates $ \c -> traceSuper c spheres 10
+                  in forM coordinates $ \c -> traceSuper c spheres 5
 
 addTuples :: (Float, Float, Float) -> (Float, Float, Float) -> (Float, Float, Float)
 addTuples (a,b,c) (x,y,z) = (a+x, b+y, c+z)
@@ -184,6 +184,6 @@ makePPM width height xs = "P3\n" ++ show width ++ " " ++ show height ++ "\n255\n
 
 -- main = make_pgm resX resY toRGBTupleList
 main = do 
-    spheres <- randomSphereList 60
+    spheres <- randomSphereList 10
     colors'' <- colors' spheres
     writeFile "test2.ppm" (makePPM (round resX) (round resY) colors'')
